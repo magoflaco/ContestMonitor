@@ -1,0 +1,44 @@
+# ---- .NET build output ----
+bin/
+obj/
+publish/
+out/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ---- Rider / VS / VS Code ----
+.vs/
+.idea/
+.vscode/
+*.vsix
+
+# ---- NuGet ----
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# ---- Build artifacts ----
+*.dll
+*.exe
+*.pdb
+*.cache
+*.log
+
+# Keep the app icon (binary, but part of the source)
+!Assets/app.ico
+
+# ---- OS noise ----
+Thumbs.db
+Desktop.ini
+.DS_Store
+
+# ---- App runtime state (created at %AppData%, but ignore any local copies) ----
+seen_contests.json
+settings.json

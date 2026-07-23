@@ -13,11 +13,19 @@ public sealed class ContestRow : ObservableObject
         Start = string.IsNullOrWhiteSpace(contest.Start) ? "—" : contest.Start;
         RegistrationEnd = string.IsNullOrWhiteSpace(contest.RegistrationEnd) ? "—" : contest.RegistrationEnd;
         _isNew = isNew;
+
+        if (Uri.TryCreate(contest.EnrollUrl, UriKind.Absolute, out var uri))
+            EnrollUri = uri;
     }
 
     public string Name { get; }
     public string Start { get; }
     public string RegistrationEnd { get; }
+
+    /// <summary>Enrollment link; null when the page had no usable URL.</summary>
+    public Uri? EnrollUri { get; }
+
+    public bool HasEnroll => EnrollUri is not null;
 
     public bool IsNew
     {
