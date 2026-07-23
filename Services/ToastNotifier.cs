@@ -59,6 +59,20 @@ public sealed class ToastNotifier : IDisposable
         }
     }
 
+    /// <summary>Show a one-off toast so the user can confirm notifications work.</summary>
+    public void ShowTestNotification()
+    {
+        new ToastContentBuilder()
+            .AddArgument("action", "test")
+            .AddText("Contest Monitor")
+            .AddText("Notifications are working. You will be alerted when a new contest appears.")
+            .Show(toast =>
+            {
+                toast.Tag = "contest-test";
+                toast.Group = "contest-monitor";
+            });
+    }
+
     /// <summary>Stop re-notifying; the user has seen the alert.</summary>
     public void Acknowledge()
     {
@@ -118,10 +132,13 @@ public sealed class ToastNotifier : IDisposable
         if (_shownCount > 1 && remaining >= 0)
             builder.AddAttributionText($"Reminder {_shownCount} of {_settings.MaxNotificationRepeats}");
 
-        builder.AddButton(new ToastButton()
-            .SetContent("Open")
-            .AddArgument("action", "ack")
-            .SetBackgroundActivation());
+        // Button that opens the contests page directly in the browser.
+        if (Uri.TryCreate(_settings.ContestsUrl, UriKind.Absolute, out var contestsUri))
+        {
+            builder.AddButton(new ToastButton()
+                .SetContent("View contests")
+                .SetProtocolActivation(contestsUri));
+        }
 
         // Reuse a single tag so repeats replace one another instead of stacking.
         builder.Show(toast =>

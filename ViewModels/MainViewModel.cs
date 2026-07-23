@@ -21,6 +21,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     private bool _hasAlert;
     private int _newCount;
     private bool _isListEmpty = true;
+    private bool _startWithWindows;
     private string _checkTimesText;
 
     public MainViewModel(
@@ -36,10 +37,12 @@ public sealed class MainViewModel : ObservableObject, IDisposable
         _notifier = notifier;
         _seen = seen;
         _checkTimesText = string.Join(", ", settings.CheckTimes);
+        _startWithWindows = AutostartService.IsEnabled();
 
         CheckNowCommand = new RelayCommand(CheckNowAsync);
         MarkSeenCommand = new RelayCommand(MarkSeen, () => HasAlert);
         SaveTimesCommand = new RelayCommand(SaveTimes);
+        TestNotifyCommand = new RelayCommand(() => _notifier.ShowTestNotification());
 
         _monitor.CheckCompleted += OnCheckCompleted;
         _scheduler.NextRunScheduled += (_, next) => UpdateNextCheck(next);
@@ -53,6 +56,7 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     public RelayCommand CheckNowCommand { get; }
     public RelayCommand MarkSeenCommand { get; }
     public RelayCommand SaveTimesCommand { get; }
+    public RelayCommand TestNotifyCommand { get; }
 
     public string StatusText
     {
@@ -98,6 +102,17 @@ public sealed class MainViewModel : ObservableObject, IDisposable
     {
         get => _isListEmpty;
         private set => SetProperty(ref _isListEmpty, value);
+    }
+
+    /// <summary>Launch the app automatically when Windows starts.</summary>
+    public bool StartWithWindows
+    {
+        get => _startWithWindows;
+        set
+        {
+            if (SetProperty(ref _startWithWindows, value))
+                AutostartService.SetEnabled(value);
+        }
     }
 
     public string CheckTimesText

@@ -9,6 +9,9 @@ public sealed class Contest
     public string Start { get; init; } = string.Empty;
     public string RegistrationEnd { get; init; } = string.Empty;
 
+    /// <summary>Absolute URL to enroll / follow the contest (the row's sign-up link).</summary>
+    public string EnrollUrl { get; init; } = string.Empty;
+
     /// <summary>
     /// Stable identity used to detect whether a contest has already been seen.
     /// Name + start date keeps it unique even if two editions share a name.

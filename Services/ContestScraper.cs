@@ -32,12 +32,14 @@ public sealed class ContestScraper
     public async Task<IReadOnlyList<Contest>> GetUpcomingContestsAsync(CancellationToken ct = default)
     {
         var html = await _http.GetStringAsync(_settings.ContestsUrl, ct).ConfigureAwait(false);
-        return Parse(html);
+        return Parse(html, _settings.ContestsUrl);
     }
 
     /// <summary>Pure parsing step, separated so it can be unit-tested offline.</summary>
-    public static IReadOnlyList<Contest> Parse(string html)
+    public static IReadOnlyList<Contest> Parse(string html, string pageUrl)
     {
+        Uri.TryCreate(pageUrl, UriKind.Absolute, out var baseUri);
+
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -70,10 +72,44 @@ public sealed class ContestScraper
                 Name = name,
                 Start = cells.Count > 1 ? Clean(cells[1].InnerText) : string.Empty,
                 RegistrationEnd = cells.Count > 2 ? Clean(cells[2].InnerText) : string.Empty,
+                EnrollUrl = ExtractEnrollUrl(row, baseUri),
             });
         }
 
         return contests;
+    }
+
+    /// <summary>
+    /// Pull the enrollment link from a row. The row's last cell contains
+    /// anchors like "Sign up" (/teams/new) and "Log in" (/teams_sessions/new).
+    /// Prefer the sign-up/register one; resolve to an absolute URL. Falls back
+    /// to the contests page itself if no link is found.
+    /// </summary>
+    private static string ExtractEnrollUrl(HtmlNode row, Uri? baseUri)
+    {
+        var anchors = row.SelectNodes(".//a[@href]");
+        HtmlNode? chosen = null;
+        if (anchors is not null)
+        {
+            chosen = anchors.FirstOrDefault(a =>
+            {
+                var t = a.InnerText;
+                return t.Contains("sign up", StringComparison.OrdinalIgnoreCase)
+                    || t.Contains("inscri", StringComparison.OrdinalIgnoreCase)
+                    || t.Contains("register", StringComparison.OrdinalIgnoreCase)
+                    || t.Contains("enroll", StringComparison.OrdinalIgnoreCase);
+            }) ?? anchors[0];
+        }
+
+        var href = chosen?.GetAttributeValue("href", string.Empty).Trim() ?? string.Empty;
+
+        if (string.IsNullOrEmpty(href))
+            return baseUri?.ToString() ?? string.Empty;
+
+        if (baseUri is not null && Uri.TryCreate(baseUri, href, out var abs))
+            return abs.ToString();
+
+        return href;
     }
 
     private static HtmlNode? FindHeading(HtmlDocument doc, string text) =>
